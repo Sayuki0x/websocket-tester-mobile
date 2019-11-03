@@ -144,7 +144,7 @@ export default class Root extends Component {
             <TouchableHighlight onPress={this.connect} underlayColor="white">
               <Icon
                 name="check"
-                size={20}
+                size={40}
                 color="#0A0A0A"
                 style={styles.inputIconStyle}
               />
@@ -165,33 +165,13 @@ export default class Root extends Component {
             >
               <Icon
                 name="times"
-                size={20}
+                size={40}
                 color="hsl(348, 100%, 61%)"
                 style={styles.inputIconStyle}
               />
             </TouchableHighlight>
           </View>
         )}
-
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.inputStyle}
-            value={message}
-            onChangeText={message => this.setState({ message })}
-            onSubmitEditing={this.send}
-          />
-          <TouchableHighlight
-            onPress={this.send}
-            underlayColor="hsl(0, 0%, 98%)"
-          >
-            <Icon
-              style={styles.inputIconStyle}
-              name="paper-plane"
-              size={20}
-              color="#0A0A0A"
-            />
-          </TouchableHighlight>
-        </View>
 
         <ScrollView
           ref={ref => (this.scrollView = ref)}
@@ -262,6 +242,26 @@ export default class Root extends Component {
             }
           })}
         </ScrollView>
+
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.inputStyle}
+            value={message}
+            onChangeText={message => this.setState({ message })}
+            onSubmitEditing={this.send}
+          />
+          <TouchableHighlight
+            onPress={this.send}
+            underlayColor="hsl(0, 0%, 98%)"
+          >
+            <Icon
+              style={styles.inputIconStyle}
+              name="paper-plane"
+              size={40}
+              color="#0A0A0A"
+            />
+          </TouchableHighlight>
+        </View>
       </View>
     );
   }
@@ -270,7 +270,9 @@ const styles = StyleSheet.create({
   MainContainer: {
     paddingTop: Platform.OS === 'ios' ? 20 : 0,
     paddingLeft: '2%',
-    paddingRight: '2%'
+    paddingRight: '2%',
+    height: '100%',
+    width: '100%'
   },
   toolbar: {
     backgroundColor: '#F5F5F5',
@@ -284,15 +286,19 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 22
   },
+  console: {
+    flex: 1
+  },
   inputContainer: {
     flexDirection: 'row',
     borderWidth: 1,
-    borderColor: '#000',
+    borderColor: '#121212',
     width: '100%'
   },
   inputStyle: {
     paddingLeft: '2%',
-    flex: 1
+    flex: 1,
+    height: 60
   },
   inputIconStyle: {
     padding: 10

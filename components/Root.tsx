@@ -121,90 +121,6 @@ export default class Root extends Component {
     this.log('out', message);
   }
 
-  /*
-          <ToolbarAndroid
-          style={styles.toolbar}
-          onActionSelected={this.onActionSelected}
-          title="WebSocket Tester"
-          actions={[{ title: 'Settings', show: 'always' }]}
-
-
-
-
-
-        <ScrollView
-          ref={ref => (this.scrollView = ref)}
-          onContentSizeChange={(contentWidth, contentHeight) => {
-            this.scrollView.scrollToEnd({ animated: true });
-          }}
-          style={styles.console}
-        >
-          {log.map((line, index) => {
-            const { type, data } = line;
-
-            switch (type) {
-              case 'system':
-                return (
-                  <Text
-                    key={index}
-                    style={{
-                      color: 'hsl(204, 71%, 53%)',
-                      fontFamily: monospaceFont
-                    }}
-                  >
-                    {data}
-                  </Text>
-                );
-              case 'out':
-                return (
-                  <Text
-                    key={index}
-                    style={{
-                      color: 'hsl(14, 100%, 53%)',
-                      fontFamily: monospaceFont
-                    }}
-                  >
-                    {data}
-                  </Text>
-                );
-              case 'in':
-                return (
-                  <Text
-                    key={index}
-                    style={{
-                      color: 'hsl(0, 0%, 4%)',
-                      fontFamily: monospaceFont
-                    }}
-                  >
-                    {data}
-                  </Text>
-                );
-              case 'error':
-                return (
-                  <Text
-                    key={index}
-                    style={{
-                      color: 'hsl(14, 100%, 53%)',
-                      fontFamily: monospaceFont
-                    }}
-                  >
-                    {data}
-                  </Text>
-                );
-              default:
-                return (
-                  <Text key={index}>
-                    {data} style=
-                    {{ color: 'hsl(0, 0%, 4%)', fontFamily: monospaceFont }}>
-                  </Text>
-                );
-            }
-          })}
-        </ScrollView>
-
-        />
-        */
-
   onActionSelected(position) {}
 
   render() {
@@ -217,43 +133,49 @@ export default class Root extends Component {
           title="WebSocket Tester"
           actions={[{ title: 'Settings', show: 'always' }]}
         />
-
-        <View style={styles.searchSection}>
-          <TextInput
-            style={styles.input}
-            value={location}
-            onChangeText={location => this.setState({ location })}
-            onSubmitEditing={this.connect}
-          />
-
-          {!connected && (
+        {!connected && (
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.inputStyle}
+              value={location}
+              onChangeText={location => this.setState({ location })}
+              onSubmitEditing={this.connect}
+            />
             <TouchableHighlight onPress={this.connect} underlayColor="white">
               <Icon
-                style={styles.searchIcon}
                 name="check"
-                size={30}
+                size={20}
                 color="#0A0A0A"
+                style={styles.inputIconStyle}
               />
             </TouchableHighlight>
-          )}
-          {connected && (
+          </View>
+        )}
+        {connected && (
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.inputStyle}
+              value={location}
+              onChangeText={location => this.setState({ location })}
+              onSubmitEditing={this.connect}
+            />
             <TouchableHighlight
               onPress={this.disconnect}
               underlayColor="hsl(0, 0%, 98%)"
             >
               <Icon
-                style={styles.searchIcon}
                 name="times"
-                size={30}
+                size={20}
                 color="hsl(348, 100%, 61%)"
+                style={styles.inputIconStyle}
               />
             </TouchableHighlight>
-          )}
-        </View>
+          </View>
+        )}
 
-        <View style={styles.searchSection}>
+        <View style={styles.inputContainer}>
           <TextInput
-            style={styles.input}
+            style={styles.inputStyle}
             value={message}
             onChangeText={message => this.setState({ message })}
             onSubmitEditing={this.send}
@@ -263,9 +185,9 @@ export default class Root extends Component {
             underlayColor="hsl(0, 0%, 98%)"
           >
             <Icon
-              style={styles.searchIcon}
+              style={styles.inputIconStyle}
               name="paper-plane"
-              size={30}
+              size={20}
               color="#0A0A0A"
             />
           </TouchableHighlight>
@@ -362,9 +284,16 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 22
   },
-  input: {
-    height: 40,
-    borderColor: '#0A0A0A',
-    borderWidth: 1
+  inputContainer: {
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderColor: '#000',
+    width: '100%'
+  },
+  inputStyle: {
+    flex: 1
+  },
+  inputIconStyle: {
+    padding: 10
   }
 });

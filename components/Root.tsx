@@ -117,6 +117,10 @@ export default class Root extends Component {
       return;
     }
 
+    if (message.trim() === '') {
+      return;
+    }
+
     console.log(`send message: ${message}`);
     this.client.send(message);
     this.log('out', message);

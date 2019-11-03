@@ -8,7 +8,8 @@ import {
   ScrollView,
   Platform,
   ToolbarAndroid,
-  TouchableHighlight
+  TouchableHighlight,
+  KeyboardAvoidingView
 } from 'react-native';
 import { w3cwebsocket as W3CWebSocket } from 'websocket';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -119,6 +120,10 @@ export default class Root extends Component {
     console.log(`send message: ${message}`);
     this.client.send(message);
     this.log('out', message);
+
+    this.setState({
+      message: ''
+    });
   }
 
   onActionSelected(position) {}
@@ -126,7 +131,7 @@ export default class Root extends Component {
   render() {
     const { location, message, connected, log } = this.state;
     return (
-      <View style={styles.MainContainer}>
+      <KeyboardAvoidingView style={styles.MainContainer} behavior="padding">
         <ToolbarAndroid
           style={styles.toolbar}
           onActionSelected={this.onActionSelected}
@@ -248,7 +253,11 @@ export default class Root extends Component {
             style={styles.inputStyle}
             value={message}
             onChangeText={message => this.setState({ message })}
-            onSubmitEditing={this.send}
+            onSubmitEditing={event => {
+              event.preventDefault();
+              this.send();
+            }}
+            blurOnSubmit={false}
           />
           <TouchableHighlight
             onPress={this.send}
@@ -262,7 +271,7 @@ export default class Root extends Component {
             />
           </TouchableHighlight>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     );
   }
 }
@@ -271,13 +280,13 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'ios' ? 20 : 0,
     paddingLeft: '2%',
     paddingRight: '2%',
-    height: '100%',
-    width: '100%'
+    height: '104%',
+    width: '100%',
+    justifyContent: 'flex-end'
   },
   toolbar: {
     backgroundColor: '#F5F5F5',
     height: 56,
-    top: 0,
     alignSelf: 'stretch',
     textAlign: 'center',
     color: '#F5F5F5'
@@ -293,7 +302,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderWidth: 1,
     borderColor: '#121212',
-    width: '100%'
+    width: '100%',
+    height: 60
   },
   inputStyle: {
     paddingLeft: '2%',

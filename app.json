@@ -18,7 +18,11 @@
     },
     "assetBundlePatterns": ["**/*"],
     "ios": {
+      "bundleIdentifier": "com.logicbite.websockettester",
       "supportsTablet": true
+    },
+    "android": {
+      "package": "com.logicbite.websockettester"
     }
   }
 }

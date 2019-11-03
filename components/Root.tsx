@@ -6,10 +6,12 @@ import {
   TextInput,
   StyleSheet,
   ScrollView,
-  Platform
+  Platform,
+  ToolbarAndroid,
+  TouchableHighlight
 } from 'react-native';
-import { textInput } from '../styles/styles';
 import { w3cwebsocket as W3CWebSocket } from 'websocket';
+import Icon from 'react-native-vector-icons/FontAwesome';
 
 const monospaceFont = Platform.OS === 'ios' ? 'Menlo' : 'monospace';
 
@@ -119,31 +121,154 @@ export default class Root extends Component {
     this.log('out', message);
   }
 
+  /*
+          <ToolbarAndroid
+          style={styles.toolbar}
+          onActionSelected={this.onActionSelected}
+          title="WebSocket Tester"
+          actions={[{ title: 'Settings', show: 'always' }]}
+
+
+
+
+
+        <ScrollView
+          ref={ref => (this.scrollView = ref)}
+          onContentSizeChange={(contentWidth, contentHeight) => {
+            this.scrollView.scrollToEnd({ animated: true });
+          }}
+          style={styles.console}
+        >
+          {log.map((line, index) => {
+            const { type, data } = line;
+
+            switch (type) {
+              case 'system':
+                return (
+                  <Text
+                    key={index}
+                    style={{
+                      color: 'hsl(204, 71%, 53%)',
+                      fontFamily: monospaceFont
+                    }}
+                  >
+                    {data}
+                  </Text>
+                );
+              case 'out':
+                return (
+                  <Text
+                    key={index}
+                    style={{
+                      color: 'hsl(14, 100%, 53%)',
+                      fontFamily: monospaceFont
+                    }}
+                  >
+                    {data}
+                  </Text>
+                );
+              case 'in':
+                return (
+                  <Text
+                    key={index}
+                    style={{
+                      color: 'hsl(0, 0%, 4%)',
+                      fontFamily: monospaceFont
+                    }}
+                  >
+                    {data}
+                  </Text>
+                );
+              case 'error':
+                return (
+                  <Text
+                    key={index}
+                    style={{
+                      color: 'hsl(14, 100%, 53%)',
+                      fontFamily: monospaceFont
+                    }}
+                  >
+                    {data}
+                  </Text>
+                );
+              default:
+                return (
+                  <Text key={index}>
+                    {data} style=
+                    {{ color: 'hsl(0, 0%, 4%)', fontFamily: monospaceFont }}>
+                  </Text>
+                );
+            }
+          })}
+        </ScrollView>
+
+        />
+        */
+
+  onActionSelected(position) {}
+
   render() {
     const { location, message, connected, log } = this.state;
     return (
-      <View>
-        <Text>Location:</Text>
-        <TextInput
-          style={textInput}
-          value={location}
-          onChangeText={location => this.setState({ location })}
-          onSubmitEditing={this.connect}
+      <View style={styles.MainContainer}>
+        <ToolbarAndroid
+          style={styles.toolbar}
+          onActionSelected={this.onActionSelected}
+          title="WebSocket Tester"
+          actions={[{ title: 'Settings', show: 'always' }]}
         />
-        <View style={styles.fixToText}>
-          {!connected && <Button title="Connect" onPress={this.connect} />}
-          {connected && <Button title="Disconnect" onPress={this.disconnect} />}
+
+        <View style={styles.searchSection}>
+          <TextInput
+            style={styles.input}
+            value={location}
+            onChangeText={location => this.setState({ location })}
+            onSubmitEditing={this.connect}
+          />
+
+          {!connected && (
+            <TouchableHighlight onPress={this.connect} underlayColor="white">
+              <Icon
+                style={styles.searchIcon}
+                name="check"
+                size={30}
+                color="#0A0A0A"
+              />
+            </TouchableHighlight>
+          )}
+          {connected && (
+            <TouchableHighlight
+              onPress={this.disconnect}
+              underlayColor="hsl(0, 0%, 98%)"
+            >
+              <Icon
+                style={styles.searchIcon}
+                name="times"
+                size={30}
+                color="hsl(348, 100%, 61%)"
+              />
+            </TouchableHighlight>
+          )}
         </View>
-        <Text>Connected: {String(connected)}</Text>
-        <Text>Message:</Text>
-        <TextInput
-          style={textInput}
-          value={message}
-          onChangeText={message => this.setState({ message })}
-          onSubmitEditing={this.send}
-        />
-        <View style={styles.fixToText}>
-          <Button title="Send" onPress={this.send} />
+
+        <View style={styles.searchSection}>
+          <TextInput
+            style={styles.input}
+            value={message}
+            onChangeText={message => this.setState({ message })}
+            onSubmitEditing={this.send}
+          />
+          <TouchableHighlight
+            onPress={this.send}
+            underlayColor="hsl(0, 0%, 98%)"
+          >
+            <Icon
+              style={styles.searchIcon}
+              name="paper-plane"
+              size={30}
+              color="#0A0A0A"
+            />
+          </TouchableHighlight>
         </View>
 
         <ScrollView
@@ -174,7 +299,7 @@ export default class Root extends Component {
                   <Text
                     key={index}
                     style={{
-                      color: 'hsl(48, 100%, 67%)',
+                      color: 'hsl(14, 100%, 53%)',
                       fontFamily: monospaceFont
                     }}
                   >
@@ -186,7 +311,7 @@ export default class Root extends Component {
                   <Text
                     key={index}
                     style={{
-                      color: 'hsl(0, 0%, 100%)',
+                      color: 'hsl(0, 0%, 4%)',
                       fontFamily: monospaceFont
                     }}
                   >
@@ -198,7 +323,7 @@ export default class Root extends Component {
                   <Text
                     key={index}
                     style={{
-                      color: 'hsl(348, 100%, 61%)',
+                      color: 'hsl(14, 100%, 53%)',
                       fontFamily: monospaceFont
                     }}
                   >
@@ -209,7 +334,7 @@ export default class Root extends Component {
                 return (
                   <Text key={index}>
                     {data} style=
-                    {{ color: 'hsl(0, 0%, 100%)', fontFamily: monospaceFont }}>
+                    {{ color: 'hsl(0, 0%, 4%)', fontFamily: monospaceFont }}>
                   </Text>
                 );
             }
@@ -219,15 +344,27 @@ export default class Root extends Component {
     );
   }
 }
-
 const styles = StyleSheet.create({
-  fixToText: {
-    flexDirection: 'row',
-    justifyContent: 'space-between'
+  MainContainer: {
+    paddingTop: Platform.OS === 'ios' ? 20 : 0,
+    paddingLeft: '2%',
+    paddingRight: '2%'
   },
-  console: {
-    height: '40%',
-    backgroundColor: '#0A0A0A',
+  toolbar: {
+    backgroundColor: '#F5F5F5',
+    height: 56,
+    top: 0,
+    alignSelf: 'stretch',
+    textAlign: 'center',
     color: '#F5F5F5'
+  },
+  textStyle: {
+    color: '#fff',
+    fontSize: 22
+  },
+  input: {
+    height: 40,
+    borderColor: '#0A0A0A',
+    borderWidth: 1
   }
 });

@@ -291,6 +291,7 @@ const styles = StyleSheet.create({
     width: '100%'
   },
   inputStyle: {
+    paddingLeft: '2%',
     flex: 1
   },
   inputIconStyle: {

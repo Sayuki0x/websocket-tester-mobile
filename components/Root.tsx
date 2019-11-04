@@ -19,16 +19,14 @@ import {
 import {
   KeyboardAvoidingView,
   TouchableHighlight,
-  ScrollView,
-  Platform
+  View,
+  Platform,
+  ScrollView
 } from 'react-native';
 import { w3cwebsocket as W3CWebSocket } from 'websocket';
+import { getStatusBarHeight } from 'react-native-status-bar-height';
 
 const monospaceFont = Platform.OS === 'ios' ? 'Menlo' : 'monospace';
-
-const dataArray = [
-  { title: 'WebSocket Options', content: 'Options will go here' }
-];
 
 type Props = {};
 
@@ -152,7 +150,12 @@ export default class Root extends Component<Props, State> {
     return (
       <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
         <Container>
-          <Header>
+          <Header
+            style={{
+              paddingTop: getStatusBarHeight(),
+              height: 54 + getStatusBarHeight()
+            }}
+          >
             <Left>
               <Button transparent>
                 <Icon name="menu" />
@@ -163,34 +166,40 @@ export default class Root extends Component<Props, State> {
             </Body>
             <Right />
           </Header>
-          <Content
+          <ScrollView
             ref={ref => (this.scrollView = ref)}
-            onContentSizeChange={() => this.scrollView._root.scrollToEnd()}
+            onContentSizeChange={() => this.scrollView.scrollToEnd()}
             style={{ flex: 1 }}
+            stickyHeaderIndices={[0]}
           >
-            <Item>
-              <Input
-                value={location}
-                onSubmitEditing={this.connect}
-                onChangeText={location => this.setState({ location })}
-              />
-              {connected ? (
-                <TouchableHighlight
-                  onPress={this.disconnect}
-                  underlayColor="white"
-                >
-                  <Text>Disconnect</Text>
-                </TouchableHighlight>
-              ) : (
-                <TouchableHighlight
-                  onPress={this.connect}
-                  underlayColor="white"
-                >
-                  <Text>Connect</Text>
-                </TouchableHighlight>
-              )}
-            </Item>
-            <Accordion dataArray={dataArray} icon="add" expandedIcon="remove" />
+            <View style={{ backgroundColor: '#FFF' }}>
+              <Item>
+                <Input
+                  value={location}
+                  onSubmitEditing={this.connect}
+                  onChangeText={location => this.setState({ location })}
+                />
+                {connected ? (
+                  <TouchableHighlight
+                    onPress={this.disconnect}
+                    underlayColor="white"
+                  >
+                    <Text style={{ color: 'hsl(0, 0%, 71%)' }}>
+                      Disconnect&nbsp;&nbsp;
+                    </Text>
+                  </TouchableHighlight>
+                ) : (
+                  <TouchableHighlight
+                    onPress={this.connect}
+                    underlayColor="white"
+                  >
+                    <Text style={{ color: 'hsl(0, 0%, 71%)' }}>
+                      Connect&nbsp;&nbsp;
+                    </Text>
+                  </TouchableHighlight>
+                )}
+              </Item>
+            </View>
             {log.map((line, index) => {
               const { type, data } = line;
 
@@ -252,7 +261,7 @@ export default class Root extends Component<Props, State> {
                   );
               }
             })}
-          </Content>
+          </ScrollView>
           <Footer>
             <FooterTab style={{ backgroundColor: '#FFF' }}>
               <Input

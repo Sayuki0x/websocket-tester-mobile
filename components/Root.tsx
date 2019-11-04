@@ -163,7 +163,11 @@ export default class Root extends Component<Props, State> {
             </Body>
             <Right />
           </Header>
-          <Content style={{ flex: 1 }}>
+          <Content
+            ref={ref => (this.scrollView = ref)}
+            onContentSizeChange={() => this.scrollView._root.scrollToEnd()}
+            style={{ flex: 1 }}
+          >
             <Item>
               <Input
                 value={location}
@@ -187,12 +191,6 @@ export default class Root extends Component<Props, State> {
               )}
             </Item>
             <Accordion dataArray={dataArray} icon="add" expandedIcon="remove" />
-          </Content>
-          <Content
-            ref={ref => (this.scrollView = ref)}
-            onContentSizeChange={() => this.scrollView._root.scrollToEnd()}
-            style={{ flex: 1 }}
-          >
             {log.map((line, index) => {
               const { type, data } = line;
 

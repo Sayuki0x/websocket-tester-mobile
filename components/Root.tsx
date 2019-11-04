@@ -1,20 +1,36 @@
 import React, { Component } from 'react';
 import {
-  Text,
+  Container,
+  Header,
+  Title,
+  Content,
+  Footer,
+  FooterTab,
   Button,
-  View,
-  TextInput,
-  StyleSheet,
-  ScrollView,
-  Platform,
-  ToolbarAndroid,
+  Left,
+  Right,
+  Body,
+  Icon,
+  Text,
+  Accordion,
+  Item,
+  Input
+} from 'native-base';
+import {
+  KeyboardAvoidingView,
   TouchableHighlight,
-  KeyboardAvoidingView
+  ScrollView,
+  Platform
 } from 'react-native';
 import { w3cwebsocket as W3CWebSocket } from 'websocket';
-import Icon from 'react-native-vector-icons/FontAwesome';
 
 const monospaceFont = Platform.OS === 'ios' ? 'Menlo' : 'monospace';
+
+const dataArray = [
+  { title: 'WebSocket Options', content: 'Options will go here' }
+];
+
+type Props = {};
 
 type State = {
   location: string;
@@ -23,14 +39,12 @@ type State = {
   log: any[];
 };
 
-export default class Root extends Component {
+export default class Root extends Component<Props, State> {
   state: State;
-
   client: W3CWebSocket;
-
   scrollView: any;
 
-  constructor(props: any) {
+  constructor(props: Props) {
     super(props);
 
     this.state = {
@@ -109,7 +123,9 @@ export default class Root extends Component {
     this.client.close();
   }
 
-  send() {
+  send(event: any) {
+    event.preventDefault();
+
     const { message, connected } = this.state;
 
     if (!connected) {
@@ -130,191 +146,127 @@ export default class Root extends Component {
     });
   }
 
-  onActionSelected(position) {}
-
   render() {
     const { location, message, connected, log } = this.state;
+
     return (
-      <KeyboardAvoidingView style={styles.MainContainer} behavior="padding">
-        <ToolbarAndroid
-          style={styles.toolbar}
-          onActionSelected={this.onActionSelected}
-          title="WebSocket Tester"
-          actions={[{ title: 'Settings', show: 'always' }]}
-        />
-        {!connected && (
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.inputStyle}
-              value={location}
-              onChangeText={location => this.setState({ location })}
-              onSubmitEditing={this.connect}
-            />
-            <TouchableHighlight onPress={this.connect} underlayColor="white">
-              <Icon
-                name="check"
-                size={40}
-                color="#0A0A0A"
-                style={styles.inputIconStyle}
+      <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
+        <Container>
+          <Header>
+            <Left>
+              <Button transparent>
+                <Icon name="menu" />
+              </Button>
+            </Left>
+            <Body>
+              <Title>WebSocket Tester</Title>
+            </Body>
+            <Right />
+          </Header>
+          <Content style={{ flex: 1 }}>
+            <Item>
+              <Input
+                value={location}
+                onSubmitEditing={this.connect}
+                onChangeText={location => this.setState({ location })}
               />
-            </TouchableHighlight>
-          </View>
-        )}
-        {connected && (
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.inputStyle}
-              value={location}
-              onChangeText={location => this.setState({ location })}
-              onSubmitEditing={this.connect}
-            />
-            <TouchableHighlight
-              onPress={this.disconnect}
-              underlayColor="hsl(0, 0%, 98%)"
-            >
-              <Icon
-                name="times"
-                size={40}
-                color="hsl(348, 100%, 61%)"
-                style={styles.inputIconStyle}
-              />
-            </TouchableHighlight>
-          </View>
-        )}
-
-        <ScrollView
-          ref={ref => (this.scrollView = ref)}
-          onContentSizeChange={(contentWidth, contentHeight) => {
-            this.scrollView.scrollToEnd({ animated: true });
-          }}
-          style={styles.console}
-        >
-          {log.map((line, index) => {
-            const { type, data } = line;
-
-            switch (type) {
-              case 'system':
-                return (
-                  <Text
-                    key={index}
-                    style={{
-                      color: 'hsl(204, 71%, 53%)',
-                      fontFamily: monospaceFont
-                    }}
-                  >
-                    {data}
-                  </Text>
-                );
-              case 'out':
-                return (
-                  <Text
-                    key={index}
-                    style={{
-                      color: 'hsl(14, 100%, 53%)',
-                      fontFamily: monospaceFont
-                    }}
-                  >
-                    {data}
-                  </Text>
-                );
-              case 'in':
-                return (
-                  <Text
-                    key={index}
-                    style={{
-                      color: 'hsl(0, 0%, 4%)',
-                      fontFamily: monospaceFont
-                    }}
-                  >
-                    {data}
-                  </Text>
-                );
-              case 'error':
-                return (
-                  <Text
-                    key={index}
-                    style={{
-                      color: 'hsl(14, 100%, 53%)',
-                      fontFamily: monospaceFont
-                    }}
-                  >
-                    {data}
-                  </Text>
-                );
-              default:
-                return (
-                  <Text key={index}>
-                    {data} style=
-                    {{ color: 'hsl(0, 0%, 4%)', fontFamily: monospaceFont }}>
-                  </Text>
-                );
-            }
-          })}
-        </ScrollView>
-
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.inputStyle}
-            value={message}
-            onChangeText={message => this.setState({ message })}
-            onSubmitEditing={event => {
-              event.preventDefault();
-              this.send();
-            }}
-            blurOnSubmit={false}
-          />
-          <TouchableHighlight
-            onPress={this.send}
-            underlayColor="hsl(0, 0%, 98%)"
+              {connected ? (
+                <TouchableHighlight
+                  onPress={this.disconnect}
+                  underlayColor="white"
+                >
+                  <Text>Disconnect</Text>
+                </TouchableHighlight>
+              ) : (
+                <TouchableHighlight
+                  onPress={this.connect}
+                  underlayColor="white"
+                >
+                  <Text>Connect</Text>
+                </TouchableHighlight>
+              )}
+            </Item>
+            <Accordion dataArray={dataArray} icon="add" expandedIcon="remove" />
+          </Content>
+          <Content
+            ref={ref => (this.scrollView = ref)}
+            onContentSizeChange={() => this.scrollView._root.scrollToEnd()}
+            style={{ flex: 1 }}
           >
-            <Icon
-              style={styles.inputIconStyle}
-              name="paper-plane"
-              size={40}
-              color="#0A0A0A"
-            />
-          </TouchableHighlight>
-        </View>
+            {log.map((line, index) => {
+              const { type, data } = line;
+
+              switch (type) {
+                case 'system':
+                  return (
+                    <Text
+                      key={index}
+                      style={{
+                        color: 'hsl(204, 71%, 53%)',
+                        fontFamily: monospaceFont
+                      }}
+                    >
+                      {data}
+                    </Text>
+                  );
+                case 'out':
+                  return (
+                    <Text
+                      key={index}
+                      style={{
+                        color: 'hsl(14, 100%, 53%)',
+                        fontFamily: monospaceFont
+                      }}
+                    >
+                      {data}
+                    </Text>
+                  );
+                case 'in':
+                  return (
+                    <Text
+                      key={index}
+                      style={{
+                        color: 'hsl(0, 0%, 4%)',
+                        fontFamily: monospaceFont
+                      }}
+                    >
+                      {data}
+                    </Text>
+                  );
+                case 'error':
+                  return (
+                    <Text
+                      key={index}
+                      style={{
+                        color: 'hsl(14, 100%, 53%)',
+                        fontFamily: monospaceFont
+                      }}
+                    >
+                      {data}
+                    </Text>
+                  );
+                default:
+                  return (
+                    <Text key={index}>
+                      {data} style=
+                      {{ color: 'hsl(0, 0%, 4%)', fontFamily: monospaceFont }}>
+                    </Text>
+                  );
+              }
+            })}
+          </Content>
+          <Footer>
+            <FooterTab style={{ backgroundColor: '#FFF' }}>
+              <Input
+                placeholder="Enter Message"
+                value={message}
+                onChangeText={message => this.setState({ message })}
+                onSubmitEditing={this.send}
+              />
+            </FooterTab>
+          </Footer>
+        </Container>
       </KeyboardAvoidingView>
     );
   }
 }
-const styles = StyleSheet.create({
-  MainContainer: {
-    paddingTop: Platform.OS === 'ios' ? 20 : 0,
-    paddingLeft: '2%',
-    paddingRight: '2%',
-    height: '104%',
-    width: '100%',
-    justifyContent: 'flex-end'
-  },
-  toolbar: {
-    backgroundColor: '#F5F5F5',
-    height: 56,
-    alignSelf: 'stretch',
-    textAlign: 'center',
-    color: '#F5F5F5'
-  },
-  textStyle: {
-    color: '#fff',
-    fontSize: 22
-  },
-  console: {
-    flex: 1
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    borderWidth: 1,
-    borderColor: '#121212',
-    width: '100%',
-    height: 60
-  },
-  inputStyle: {
-    paddingLeft: '2%',
-    flex: 1,
-    height: 60
-  },
-  inputIconStyle: {
-    padding: 10
-  }
-});

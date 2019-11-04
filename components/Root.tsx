@@ -3,7 +3,6 @@ import {
   Container,
   Header,
   Title,
-  Content,
   Footer,
   FooterTab,
   Button,
@@ -12,7 +11,6 @@ import {
   Body,
   Icon,
   Text,
-  Accordion,
   Item,
   Input
 } from 'native-base';
@@ -127,7 +125,7 @@ export default class Root extends Component<Props, State> {
     const { message, connected } = this.state;
 
     if (!connected) {
-      this.log('system', 'Connect to a websocket first!');
+      this.log('warning', 'Connect to a websocket first!');
       return;
     }
 
@@ -149,11 +147,12 @@ export default class Root extends Component<Props, State> {
 
     return (
       <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
-        <Container>
+        <Container style={{ backgroundColor: 'hsl(0, 0%, 14%)' }}>
           <Header
             style={{
               paddingTop: getStatusBarHeight(),
-              height: 54 + getStatusBarHeight()
+              height: 54 + getStatusBarHeight(),
+              backgroundColor: 'hsl(0, 0%, 4%)'
             }}
           >
             <Left>
@@ -172,103 +171,144 @@ export default class Root extends Component<Props, State> {
             style={{ flex: 1 }}
             stickyHeaderIndices={[0]}
           >
-            <View style={{ backgroundColor: '#FFF' }}>
+            <View style={{ backgroundColor: 'hsl(0, 0%, 7%)' }}>
               <Item>
                 <Input
                   value={location}
                   onSubmitEditing={this.connect}
                   onChangeText={location => this.setState({ location })}
+                  style={{ color: 'hsl(0, 0%, 98%)' }}
                 />
                 {connected ? (
                   <TouchableHighlight
                     onPress={this.disconnect}
-                    underlayColor="white"
+                    underlayColor="hsl(0, 0%, 7%)"
                   >
-                    <Text style={{ color: 'hsl(0, 0%, 71%)' }}>
+                    <Text style={{ color: 'hsl(217, 71%, 53%)' }}>
                       Disconnect&nbsp;&nbsp;
                     </Text>
                   </TouchableHighlight>
                 ) : (
                   <TouchableHighlight
                     onPress={this.connect}
-                    underlayColor="white"
+                    underlayColor="hsl(0, 0%, 7%)"
                   >
-                    <Text style={{ color: 'hsl(0, 0%, 71%)' }}>
+                    <Text style={{ color: 'hsl(217, 71%, 53%)' }}>
                       Connect&nbsp;&nbsp;
                     </Text>
                   </TouchableHighlight>
                 )}
               </Item>
             </View>
-            {log.map((line, index) => {
-              const { type, data } = line;
+            <View style={{ paddingLeft: '2%', paddingRight: '2%' }}>
+              {log.map((line, index) => {
+                const { type, data } = line;
 
-              switch (type) {
-                case 'system':
-                  return (
-                    <Text
-                      key={index}
-                      style={{
-                        color: 'hsl(204, 71%, 53%)',
-                        fontFamily: monospaceFont
-                      }}
-                    >
-                      {data}
-                    </Text>
-                  );
-                case 'out':
-                  return (
-                    <Text
-                      key={index}
-                      style={{
-                        color: 'hsl(14, 100%, 53%)',
-                        fontFamily: monospaceFont
-                      }}
-                    >
-                      {data}
-                    </Text>
-                  );
-                case 'in':
-                  return (
-                    <Text
-                      key={index}
-                      style={{
-                        color: 'hsl(0, 0%, 4%)',
-                        fontFamily: monospaceFont
-                      }}
-                    >
-                      {data}
-                    </Text>
-                  );
-                case 'error':
-                  return (
-                    <Text
-                      key={index}
-                      style={{
-                        color: 'hsl(14, 100%, 53%)',
-                        fontFamily: monospaceFont
-                      }}
-                    >
-                      {data}
-                    </Text>
-                  );
-                default:
-                  return (
-                    <Text key={index}>
-                      {data} style=
-                      {{ color: 'hsl(0, 0%, 4%)', fontFamily: monospaceFont }}>
-                    </Text>
-                  );
-              }
-            })}
+                let isValidJSON;
+                let jsonMessage;
+
+                try {
+                  jsonMessage = JSON.parse(data);
+                  isValidJSON = true;
+                } catch (error) {
+                  isValidJSON = false;
+                }
+
+                switch (type) {
+                  case 'system':
+                    return (
+                      <Text
+                        key={index}
+                        style={{
+                          color: 'hsl(204, 71%, 53%)',
+                          fontFamily: monospaceFont
+                        }}
+                        selectable={true}
+                      >
+                        {data}
+                      </Text>
+                    );
+                  case 'out':
+                    return (
+                      <Text
+                        key={index}
+                        style={{
+                          color: 'hsl(14, 100%, 53%)',
+                          fontFamily: monospaceFont
+                        }}
+                        selectable={true}
+                      >
+                        {isValidJSON
+                          ? JSON.stringify(jsonMessage, null, 2)
+                          : data}
+                      </Text>
+                    );
+                  case 'in':
+                    return (
+                      <Text
+                        key={index}
+                        style={{
+                          color: 'hsl(0, 0%, 98%)',
+                          fontFamily: monospaceFont
+                        }}
+                        selectable={true}
+                      >
+                        {isValidJSON
+                          ? JSON.stringify(jsonMessage, null, 2)
+                          : data}
+                      </Text>
+                    );
+                  case 'warning':
+                    return (
+                      <Text
+                        key={index}
+                        style={{
+                          color: 'hsl(48, 100%, 67%)',
+                          fontFamily: monospaceFont
+                        }}
+                        selectable={true}
+                      >
+                        {data}
+                      </Text>
+                    );
+                  case 'error':
+                    return (
+                      <Text
+                        key={index}
+                        style={{
+                          color: 'hsl(14, 100%, 53%)',
+                          fontFamily: monospaceFont
+                        }}
+                        selectable={true}
+                      >
+                        {data}
+                      </Text>
+                    );
+                  default:
+                    return (
+                      <Text
+                        key={index}
+                        selectable={true}
+                        style={{
+                          color: 'hsl(0, 0%, 4%)',
+                          fontFamily: monospaceFont
+                        }}
+                      >
+                        {data}
+                      </Text>
+                    );
+                }
+              })}
+            </View>
           </ScrollView>
           <Footer>
-            <FooterTab style={{ backgroundColor: '#FFF' }}>
+            <FooterTab style={{ backgroundColor: 'hsl(0, 0%, 7%)' }}>
               <Input
                 placeholder="Enter Message"
                 value={message}
                 onChangeText={message => this.setState({ message })}
                 onSubmitEditing={this.send}
+                style={{ color: 'hsl(0, 0%, 98%)' }}
               />
             </FooterTab>
           </Footer>

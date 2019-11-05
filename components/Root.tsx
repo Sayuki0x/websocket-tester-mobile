@@ -95,7 +95,9 @@ export default class Root extends Component<Props, State> {
   };
 
   showMenu = () => {
-    this.menu.show();
+    // we need to add a small timeout to menu.show 
+    // so that the touch coordinates update
+    setTimeout(this.menu.show, 10);
   };
 
   initListeners() {

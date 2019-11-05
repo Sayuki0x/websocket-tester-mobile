@@ -4386,6 +4386,18 @@ react-native-keyboard-aware-scroll-view@0.9.1:
     prop-types "^15.6.2"
     react-native-iphone-x-helper "^1.0.3"
 
+react-native-material-menu@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/react-native-material-menu/-/react-native-material-menu-1.0.0.tgz#bf3d366f7d7044accae1bc6fffe1cf13ac8d88ec"
+  integrity sha512-VUygQvyQQrtM5HBiDLHo0JGoWjegAw/IxpwgXbL9sJfPMDHizx9saZck+IkbTwTvL6PjpnwjI2fuCldoqvDGzQ==
+  dependencies:
+    prop-types "^15.6.0"
+
+react-native-popup-menu@^0.15.6:
+  version "0.15.6"
+  resolved "https://registry.yarnpkg.com/react-native-popup-menu/-/react-native-popup-menu-0.15.6.tgz#ebf885c289028e330dd66d887e685a8b0c2de970"
+  integrity sha512-ILFbQEofZQThVYAtVcOEgHJ+9wvn8992J+Oy/ByX83PoP88Meq3iw3pG1AwxMOoAPm/LjihtsDBqZ1lxjvosDg==
+
 react-native-status-bar-height@^2.4.0:
   version "2.4.0"
   resolved "https://registry.yarnpkg.com/react-native-status-bar-height/-/react-native-status-bar-height-2.4.0.tgz#de8cee4bb733a196167210d2d0bc1fa10acba3e3"

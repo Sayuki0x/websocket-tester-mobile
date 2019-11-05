@@ -19,10 +19,13 @@ import {
   TouchableHighlight,
   View,
   Platform,
-  ScrollView
+  ScrollView,
+  StyleSheet,
+  Clipboard
 } from 'react-native';
 import { w3cwebsocket as W3CWebSocket } from 'websocket';
 import { getStatusBarHeight } from 'react-native-status-bar-height';
+import Menu, { MenuItem, MenuDivider } from 'react-native-material-menu';
 
 const monospaceFont = Platform.OS === 'ios' ? 'Menlo' : 'monospace';
 
@@ -32,13 +35,18 @@ type State = {
   location: string;
   message: string;
   connected: boolean;
+  connectionInProgress: boolean;
   log: any[];
+  selectedLine: any;
+  touchX: number;
+  touchY: number;
 };
 
 export default class Root extends Component<Props, State> {
   state: State;
   client: W3CWebSocket;
   scrollView: any;
+  menu: any;
 
   constructor(props: Props) {
     super(props);
@@ -47,7 +55,11 @@ export default class Root extends Component<Props, State> {
       location: 'ws://echo.websocket.org',
       message: '',
       connected: false,
-      log: []
+      connectionInProgress: false,
+      log: [],
+      selectedLine: {},
+      touchX: 0,
+      touchY: 0
     };
 
     this.connect = this.connect.bind(this);
@@ -55,9 +67,17 @@ export default class Root extends Component<Props, State> {
     this.send = this.send.bind(this);
     this.initListeners = this.initListeners.bind(this);
     this.log = this.log.bind(this);
+    this.handleLogLongPress = this.handleLogLongPress.bind(this);
+    this.setMenuRef = this.setMenuRef.bind(this);
+    this.copySelected = this.copySelected.bind(this);
+    this.saveSelected = this.saveSelected.bind(this);
   }
 
   connect() {
+    this.setState({
+      connectionInProgress: true
+    });
+
     const { location, connected } = this.state;
 
     if (connected) {
@@ -70,21 +90,33 @@ export default class Root extends Component<Props, State> {
     this.initListeners();
   }
 
+  hideMenu = () => {
+    this.menu.hide();
+  };
+
+  showMenu = () => {
+    this.menu.show();
+  };
+
   initListeners() {
     this.client.onopen = () => {
       const { location } = this.state;
       console.log('Connected to websocket');
       this.setState({
-        connected: true
+        connected: true,
+        connectionInProgress: false
       });
       this.log('system', `Connected to ${location}`);
     };
-    this.client.onmessage = message => {
+    this.client.onmessage = (message: { data: any }) => {
       const { data } = message;
       console.log(`incoming message: ${data}`);
       this.log('in', data);
     };
     this.client.onerror = () => {
+      this.setState({
+        connectionInProgress: false
+      });
       console.log('error occurred');
       this.log('error', 'An error occurred while connecting to the websocket.');
     };
@@ -106,6 +138,10 @@ export default class Root extends Component<Props, State> {
       log
     });
   }
+
+  setMenuRef = (ref: any) => {
+    this.menu = ref;
+  };
 
   disconnect() {
     console.log('disconnect');
@@ -142,19 +178,50 @@ export default class Root extends Component<Props, State> {
     });
   }
 
+  async handleLogLongPress(event: any, selectedLine: any) {
+    console.log(event);
+
+    const touchX = event.nativeEvent.pageX;
+    const touchY = event.nativeEvent.pageY;
+
+    await this.setState({
+      selectedLine,
+      touchX,
+      touchY
+    });
+
+    this.showMenu();
+  }
+
+  saveSelected() {
+    const { selectedLine } = this.state;
+    const { data } = selectedLine;
+    console.log(`Saving ${data} as a command. {TODO}`);
+    this.menu.hide();
+  }
+
+  copySelected() {
+    const { selectedLine } = this.state;
+    const { data } = selectedLine;
+    Clipboard.setString(data);
+    this.menu.hide();
+  }
+
   render() {
-    const { location, message, connected, log } = this.state;
+    const {
+      location,
+      message,
+      connected,
+      connectionInProgress,
+      log,
+      touchX,
+      touchY
+    } = this.state;
 
     return (
-      <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
-        <Container style={{ backgroundColor: 'hsl(0, 0%, 14%)' }}>
-          <Header
-            style={{
-              paddingTop: getStatusBarHeight(),
-              height: 54 + getStatusBarHeight(),
-              backgroundColor: 'hsl(0, 0%, 4%)'
-            }}
-          >
+      <KeyboardAvoidingView behavior="padding" style={styles.rootContainer}>
+        <Container style={styles.container}>
+          <Header style={styles.header}>
             <Left>
               <Button transparent>
                 <Icon name="menu" />
@@ -168,44 +235,50 @@ export default class Root extends Component<Props, State> {
           <ScrollView
             ref={ref => (this.scrollView = ref)}
             onContentSizeChange={() => this.scrollView.scrollToEnd()}
-            style={{ flex: 1 }}
+            style={styles.scrollView}
             stickyHeaderIndices={[0]}
+            contentContainerStyle={{ justifyContent: 'flex-end' }}
           >
-            <View style={{ backgroundColor: 'hsl(0, 0%, 7%)' }}>
+            <View style={styles.urlBar}>
               <Item>
                 <Input
                   value={location}
                   onSubmitEditing={this.connect}
                   onChangeText={location => this.setState({ location })}
-                  style={{ color: 'hsl(0, 0%, 98%)' }}
+                  style={styles.input}
                 />
+
                 {connected ? (
                   <TouchableHighlight
                     onPress={this.disconnect}
                     underlayColor="hsl(0, 0%, 7%)"
                   >
-                    <Text style={{ color: 'hsl(217, 71%, 53%)' }}>
-                      Disconnect&nbsp;&nbsp;
-                    </Text>
+                    <Text style={styles.link}>Disconnect&nbsp;&nbsp;</Text>
                   </TouchableHighlight>
-                ) : (
+                ) : !connectionInProgress ? (
                   <TouchableHighlight
                     onPress={this.connect}
                     underlayColor="hsl(0, 0%, 7%)"
                   >
-                    <Text style={{ color: 'hsl(217, 71%, 53%)' }}>
-                      Connect&nbsp;&nbsp;
-                    </Text>
+                    <Text style={styles.link}>Connect&nbsp;&nbsp;</Text>
                   </TouchableHighlight>
+                ) : (
+                  <Text style={styles.link}>Connect&nbsp;&nbsp;</Text>
                 )}
               </Item>
             </View>
-            <View style={{ paddingLeft: '2%', paddingRight: '2%' }}>
+            <View style={styles.console}>
               {log.map((line, index) => {
                 const { type, data } = line;
 
-                let isValidJSON;
-                let jsonMessage;
+                const logStyle =
+                  index % 2 == 0 ? styles.logEven : styles.logOdd;
+
+                const underlayColor =
+                  index % 2 == 0 ? 'hsl(0, 0%, 13%)' : 'hsl(0, 0%, 9%)';
+
+                let isValidJSON: boolean;
+                let jsonMessage: any;
 
                 try {
                   jsonMessage = JSON.parse(data);
@@ -217,98 +290,96 @@ export default class Root extends Component<Props, State> {
                 switch (type) {
                   case 'system':
                     return (
-                      <Text
-                        key={index}
-                        style={{
-                          color: 'hsl(204, 71%, 53%)',
-                          fontFamily: monospaceFont
-                        }}
-                        selectable={true}
-                      >
-                        {data}
-                      </Text>
+                      <View style={logStyle} key={index}>
+                        <Text style={styles.systemLog}>{data}</Text>
+                      </View>
                     );
                   case 'out':
                     return (
-                      <Text
+                      <TouchableHighlight
                         key={index}
-                        style={{
-                          color: 'hsl(14, 100%, 53%)',
-                          fontFamily: monospaceFont
+                        underlayColor={underlayColor}
+                        onLongPress={event => {
+                          this.handleLogLongPress(event, log[index]);
                         }}
-                        selectable={true}
                       >
-                        {isValidJSON
-                          ? JSON.stringify(jsonMessage, null, 2)
-                          : data}
-                      </Text>
+                        <View style={logStyle}>
+                          <Text style={styles.outLog}>
+                            {isValidJSON
+                              ? JSON.stringify(jsonMessage, null, 2)
+                              : data}
+                          </Text>
+                        </View>
+                      </TouchableHighlight>
                     );
                   case 'in':
                     return (
-                      <Text
+                      <TouchableHighlight
                         key={index}
-                        style={{
-                          color: 'hsl(0, 0%, 98%)',
-                          fontFamily: monospaceFont
+                        underlayColor={underlayColor}
+                        onLongPress={event => {
+                          this.handleLogLongPress(event, log[index]);
                         }}
-                        selectable={true}
                       >
-                        {isValidJSON
-                          ? JSON.stringify(jsonMessage, null, 2)
-                          : data}
-                      </Text>
+                        <View style={logStyle}>
+                          <Text style={styles.inLog}>
+                            {isValidJSON
+                              ? JSON.stringify(jsonMessage, null, 2)
+                              : data}
+                          </Text>
+                        </View>
+                      </TouchableHighlight>
                     );
                   case 'warning':
                     return (
-                      <Text
-                        key={index}
-                        style={{
-                          color: 'hsl(48, 100%, 67%)',
-                          fontFamily: monospaceFont
-                        }}
-                        selectable={true}
-                      >
-                        {data}
-                      </Text>
+                      <View style={logStyle} key={index}>
+                        <Text style={styles.warningLog}>{data}</Text>
+                      </View>
                     );
                   case 'error':
                     return (
-                      <Text
-                        key={index}
-                        style={{
-                          color: 'hsl(14, 100%, 53%)',
-                          fontFamily: monospaceFont
-                        }}
-                        selectable={true}
-                      >
-                        {data}
-                      </Text>
+                      <View style={logStyle} key={index}>
+                        <Text style={styles.errorLog}>{data}</Text>
+                      </View>
                     );
                   default:
                     return (
-                      <Text
-                        key={index}
-                        selectable={true}
-                        style={{
-                          color: 'hsl(0, 0%, 4%)',
-                          fontFamily: monospaceFont
-                        }}
-                      >
-                        {data}
-                      </Text>
+                      <View style={logStyle} key={index}>
+                        <Text style={styles.defaultLog}>{data}</Text>
+                      </View>
                     );
                 }
               })}
             </View>
           </ScrollView>
+
+          <View
+            style={{
+              position: 'absolute',
+              left: touchX,
+              top: touchY,
+              alignContent: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            <Menu ref={this.setMenuRef} button={<Text />} style={styles.menu}>
+              <MenuItem onPress={this.copySelected}>
+                <Text style={styles.menuText}>Copy to Clipboard</Text>
+              </MenuItem>
+              <MenuItem onPress={this.saveSelected}>
+                <Text style={styles.menuText}>Save Query</Text>
+              </MenuItem>
+            </Menu>
+          </View>
+
           <Footer>
-            <FooterTab style={{ backgroundColor: 'hsl(0, 0%, 7%)' }}>
+            <FooterTab style={styles.footer}>
               <Input
                 placeholder="Enter Message"
                 value={message}
                 onChangeText={message => this.setState({ message })}
                 onSubmitEditing={this.send}
-                style={{ color: 'hsl(0, 0%, 98%)' }}
+                style={styles.input}
               />
             </FooterTab>
           </Footer>
@@ -317,3 +388,68 @@ export default class Root extends Component<Props, State> {
     );
   }
 }
+
+const consoleFontSize = 17;
+
+const styles = StyleSheet.create({
+  rootContainer: { flex: 1 },
+  container: { backgroundColor: 'hsl(0, 0%, 14%)' },
+  header: {
+    paddingTop: getStatusBarHeight(),
+    height: 54 + getStatusBarHeight(),
+    backgroundColor: 'hsl(0, 0%, 4%)'
+  },
+  urlBar: { backgroundColor: 'hsl(0, 0%, 7%)' },
+  scrollView: { flex: 1 },
+  input: { color: 'hsl(0, 0%, 98%)' },
+  link: { color: 'hsl(171, 100%, 41%)', paddingRight: '2%' },
+  console: {},
+  systemLog: {
+    color: 'hsl(0, 0%, 67%)',
+    fontFamily: monospaceFont,
+    fontSize: consoleFontSize
+  },
+  outLog: {
+    color: 'hsl(14, 100%, 53%)',
+    fontFamily: monospaceFont,
+    fontSize: consoleFontSize
+  },
+  inLog: {
+    color: 'hsl(0, 0%, 98%)',
+    fontFamily: monospaceFont,
+    fontSize: consoleFontSize
+  },
+  warningLog: {
+    color: 'hsl(48, 100%, 67%)',
+    fontFamily: monospaceFont,
+    fontSize: consoleFontSize
+  },
+  errorLog: {
+    color: 'hsl(348, 100%, 61%)',
+    fontFamily: monospaceFont,
+    fontSize: consoleFontSize
+  },
+  defaultLog: {
+    color: 'hsl(0, 0%, 4%)',
+    fontFamily: monospaceFont,
+    fontSize: consoleFontSize
+  },
+  logEven: {
+    paddingTop: 1,
+    paddingBottom: 1,
+    paddingLeft: '2%',
+    paddingRight: '2%'
+  },
+  logOdd: {
+    paddingTop: 1,
+    paddingBottom: 1,
+    backgroundColor: 'hsl(0, 0%, 11%)',
+    paddingLeft: '2%',
+    paddingRight: '2%'
+  },
+  menuText: {
+    color: 'hsl(0, 0%, 98%)'
+  },
+  footer: { backgroundColor: 'hsl(0, 0%, 7%)' },
+  menu: { backgroundColor: 'hsl(0, 0%, 4%)' }
+});

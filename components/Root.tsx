@@ -114,7 +114,7 @@ export default class Root extends Component<Props, State> {
       Toast.show({
         text: `Connected to ${location}`,
         buttonText: 'Okay',
-        duration: 1000,
+        duration: 2000,
         type: 'success',
         position: 'top'
       });
@@ -132,7 +132,7 @@ export default class Root extends Component<Props, State> {
       Toast.show({
         text: 'An error occurred connecting to the websocket.',
         buttonText: 'Okay',
-        duration: 1000,
+        duration: 2000,
         type: 'danger',
         position: 'top'
       });
@@ -143,11 +143,10 @@ export default class Root extends Component<Props, State> {
       this.setState({
         connected: false
       });
-      // this.log('system', `Disconnected from ${location}`);
       Toast.show({
         text: `Disconnected from ${location}`,
         buttonText: 'Okay',
-        duration: 1000,
+        duration: 2000,
         type: 'warning',
         position: 'top'
       });
@@ -188,7 +187,7 @@ export default class Root extends Component<Props, State> {
       Toast.show({
         text: 'Connect to a websocket first!',
         buttonText: 'Okay',
-        duration: 1000,
+        duration: 2000,
         type: 'warning',
         position: 'top'
       });
@@ -232,7 +231,18 @@ export default class Root extends Component<Props, State> {
   copySelected() {
     const { selectedLine } = this.state;
     const { data } = selectedLine;
-    Clipboard.setString(data);
+
+    let isValidJSON: boolean;
+    let jsonMessage: any;
+
+    try {
+      jsonMessage = JSON.parse(data);
+      isValidJSON = true;
+    } catch (error) {
+      isValidJSON = false;
+    }
+
+    Clipboard.setString(isValidJSON ? JSON.stringify(jsonMessage, null, 2) : data);
     this.menu.hide();
   }
 
@@ -382,7 +392,6 @@ export default class Root extends Component<Props, State> {
                 })}
               </View>
             </ScrollView>
-
             <View style={{ position: 'absolute', top: touchY, left: touchX }}>
               <Menu ref={this.setMenuRef} button={<Text />} style={styles.menu}>
                 <MenuItem onPress={this.copySelected}>

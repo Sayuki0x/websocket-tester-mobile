@@ -178,20 +178,19 @@ export default class Root extends Component<Props, State> {
     });
   }
 
-  async handleLogLongPress(event: any, selectedLine: any) {
-    console.log(event);
-
-    const touchX = event.nativeEvent.pageX;
-    const touchY = event.nativeEvent.pageY;
-
-    await this.setState({
-      selectedLine,
-      touchX,
-      touchY
-    });
-
-    this.showMenu();
-  }
+  handleLogLongPress = (event: any, selectedLine: any) => {
+    this.setState(
+      {
+        selectedLine,
+        touchX: event.nativeEvent.pageX,
+        touchY: event.nativeEvent.pageY
+      },
+      () => {
+        this.showMenu();
+        console.log(this.state.touchX, this.state.touchY);
+      }
+    );
+  };
 
   saveSelected() {
     const { selectedLine } = this.state;
@@ -353,15 +352,7 @@ export default class Root extends Component<Props, State> {
             </View>
           </ScrollView>
 
-          <View
-            style={{
-              position: 'absolute',
-              left: touchX,
-              top: touchY,
-              alignContent: 'center',
-              justifyContent: 'center'
-            }}
-          >
+          <View style={{ position: 'absolute', top: touchY, left: touchX }}>
             <Menu ref={this.setMenuRef} button={<Text />} style={styles.menu}>
               <MenuItem onPress={this.copySelected}>
                 <Text style={styles.menuText}>Copy to Clipboard</Text>

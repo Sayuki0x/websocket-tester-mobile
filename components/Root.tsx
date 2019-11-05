@@ -242,7 +242,9 @@ export default class Root extends Component<Props, State> {
       isValidJSON = false;
     }
 
-    Clipboard.setString(isValidJSON ? JSON.stringify(jsonMessage, null, 2) : data);
+    Clipboard.setString(
+      isValidJSON ? JSON.stringify(jsonMessage, null, 2) : data
+    );
     this.menu.hide();
   }
 
@@ -259,19 +261,19 @@ export default class Root extends Component<Props, State> {
 
     return (
       <NativeRoot>
-        <KeyboardAvoidingView behavior="padding" style={styles.rootContainer}>
-          <Container style={styles.container}>
-            <Header style={styles.header}>
-              <Left>
-                <Button transparent>
-                  <Icon name="menu" />
-                </Button>
-              </Left>
-              <Body>
-                <Title>WebSocket Tester</Title>
-              </Body>
-              <Right />
-            </Header>
+        <Container style={styles.container}>
+          <Header style={styles.header}>
+            <Left>
+              <Button transparent>
+                <Icon name="menu" />
+              </Button>
+            </Left>
+            <Body>
+              <Title>WebSocket Tester</Title>
+            </Body>
+            <Right />
+          </Header>
+          <KeyboardAvoidingView behavior="padding" style={styles.rootContainer}>
             <ScrollView
               ref={ref => (this.scrollView = ref)}
               onContentSizeChange={() => this.scrollView.scrollToEnd()}
@@ -414,8 +416,8 @@ export default class Root extends Component<Props, State> {
                 />
               </FooterTab>
             </Footer>
-          </Container>
-        </KeyboardAvoidingView>
+          </KeyboardAvoidingView>
+        </Container>
       </NativeRoot>
     );
   }

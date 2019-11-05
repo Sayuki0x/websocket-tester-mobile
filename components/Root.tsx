@@ -12,7 +12,10 @@ import {
   Icon,
   Text,
   Item,
-  Input
+  Input,
+  Toast,
+  Content,
+  Root as NativeRoot
 } from 'native-base';
 import {
   KeyboardAvoidingView,
@@ -95,7 +98,7 @@ export default class Root extends Component<Props, State> {
   };
 
   showMenu = () => {
-    // we need to add a small timeout to menu.show 
+    // we need to add a small timeout to menu.show
     // so that the touch coordinates update
     setTimeout(this.menu.show, 10);
   };
@@ -108,7 +111,13 @@ export default class Root extends Component<Props, State> {
         connected: true,
         connectionInProgress: false
       });
-      this.log('system', `Connected to ${location}`);
+      Toast.show({
+        text: `Connected to ${location}`,
+        buttonText: 'Okay',
+        duration: 1000,
+        type: 'success',
+        position: 'top'
+      });
     };
     this.client.onmessage = (message: { data: any }) => {
       const { data } = message;
@@ -120,7 +129,13 @@ export default class Root extends Component<Props, State> {
         connectionInProgress: false
       });
       console.log('error occurred');
-      this.log('error', 'An error occurred while connecting to the websocket.');
+      Toast.show({
+        text: 'An error occurred connecting to the websocket.',
+        buttonText: 'Okay',
+        duration: 1000,
+        type: 'danger',
+        position: 'top'
+      });
     };
     this.client.onclose = () => {
       const { location } = this.state;
@@ -128,7 +143,14 @@ export default class Root extends Component<Props, State> {
       this.setState({
         connected: false
       });
-      this.log('system', `Disconnected from ${location}`);
+      // this.log('system', `Disconnected from ${location}`);
+      Toast.show({
+        text: `Disconnected from ${location}`,
+        buttonText: 'Okay',
+        duration: 1000,
+        type: 'warning',
+        position: 'top'
+      });
     };
   }
 
@@ -163,7 +185,13 @@ export default class Root extends Component<Props, State> {
     const { message, connected } = this.state;
 
     if (!connected) {
-      this.log('warning', 'Connect to a websocket first!');
+      Toast.show({
+        text: 'Connect to a websocket first!',
+        buttonText: 'Okay',
+        duration: 1000,
+        type: 'warning',
+        position: 'top'
+      });
       return;
     }
 
@@ -220,164 +248,166 @@ export default class Root extends Component<Props, State> {
     } = this.state;
 
     return (
-      <KeyboardAvoidingView behavior="padding" style={styles.rootContainer}>
-        <Container style={styles.container}>
-          <Header style={styles.header}>
-            <Left>
-              <Button transparent>
-                <Icon name="menu" />
-              </Button>
-            </Left>
-            <Body>
-              <Title>WebSocket Tester</Title>
-            </Body>
-            <Right />
-          </Header>
-          <ScrollView
-            ref={ref => (this.scrollView = ref)}
-            onContentSizeChange={() => this.scrollView.scrollToEnd()}
-            style={styles.scrollView}
-            stickyHeaderIndices={[0]}
-            contentContainerStyle={{ justifyContent: 'flex-end' }}
-          >
-            <View style={styles.urlBar}>
-              <Item>
+      <NativeRoot>
+        <KeyboardAvoidingView behavior="padding" style={styles.rootContainer}>
+          <Container style={styles.container}>
+            <Header style={styles.header}>
+              <Left>
+                <Button transparent>
+                  <Icon name="menu" />
+                </Button>
+              </Left>
+              <Body>
+                <Title>WebSocket Tester</Title>
+              </Body>
+              <Right />
+            </Header>
+            <ScrollView
+              ref={ref => (this.scrollView = ref)}
+              onContentSizeChange={() => this.scrollView.scrollToEnd()}
+              style={styles.scrollView}
+              stickyHeaderIndices={[0]}
+              contentContainerStyle={{ justifyContent: 'flex-end' }}
+            >
+              <View style={styles.urlBar}>
+                <Item>
+                  <Input
+                    value={location}
+                    onSubmitEditing={this.connect}
+                    onChangeText={location => this.setState({ location })}
+                    style={styles.input}
+                  />
+
+                  {connected ? (
+                    <TouchableHighlight
+                      onPress={this.disconnect}
+                      underlayColor="hsl(0, 0%, 7%)"
+                    >
+                      <Text style={styles.link}>Disconnect</Text>
+                    </TouchableHighlight>
+                  ) : !connectionInProgress ? (
+                    <TouchableHighlight
+                      onPress={this.connect}
+                      underlayColor="hsl(0, 0%, 7%)"
+                    >
+                      <Text style={styles.link}>Connect</Text>
+                    </TouchableHighlight>
+                  ) : (
+                    <Text style={styles.link}>Connecting...</Text>
+                  )}
+                </Item>
+              </View>
+              <View style={styles.console}>
+                {log.map((line, index) => {
+                  const { type, data } = line;
+
+                  const logStyle =
+                    index % 2 == 0 ? styles.logEven : styles.logOdd;
+
+                  const underlayColor =
+                    index % 2 == 0 ? 'hsl(0, 0%, 13%)' : 'hsl(0, 0%, 9%)';
+
+                  let isValidJSON: boolean;
+                  let jsonMessage: any;
+
+                  try {
+                    jsonMessage = JSON.parse(data);
+                    isValidJSON = true;
+                  } catch (error) {
+                    isValidJSON = false;
+                  }
+
+                  switch (type) {
+                    case 'system':
+                      return (
+                        <View style={logStyle} key={index}>
+                          <Text style={styles.systemLog}>{data}</Text>
+                        </View>
+                      );
+                    case 'out':
+                      return (
+                        <TouchableHighlight
+                          key={index}
+                          underlayColor={underlayColor}
+                          onLongPress={event => {
+                            this.handleLogLongPress(event, log[index]);
+                          }}
+                        >
+                          <View style={logStyle}>
+                            <Text style={styles.outLog}>
+                              {isValidJSON
+                                ? JSON.stringify(jsonMessage, null, 2)
+                                : data}
+                            </Text>
+                          </View>
+                        </TouchableHighlight>
+                      );
+                    case 'in':
+                      return (
+                        <TouchableHighlight
+                          key={index}
+                          underlayColor={underlayColor}
+                          onLongPress={event => {
+                            this.handleLogLongPress(event, log[index]);
+                          }}
+                        >
+                          <View style={logStyle}>
+                            <Text style={styles.inLog}>
+                              {isValidJSON
+                                ? JSON.stringify(jsonMessage, null, 2)
+                                : data}
+                            </Text>
+                          </View>
+                        </TouchableHighlight>
+                      );
+                    case 'warning':
+                      return (
+                        <View style={logStyle} key={index}>
+                          <Text style={styles.warningLog}>{data}</Text>
+                        </View>
+                      );
+                    case 'error':
+                      return (
+                        <View style={logStyle} key={index}>
+                          <Text style={styles.errorLog}>{data}</Text>
+                        </View>
+                      );
+                    default:
+                      return (
+                        <View style={logStyle} key={index}>
+                          <Text style={styles.defaultLog}>{data}</Text>
+                        </View>
+                      );
+                  }
+                })}
+              </View>
+            </ScrollView>
+
+            <View style={{ position: 'absolute', top: touchY, left: touchX }}>
+              <Menu ref={this.setMenuRef} button={<Text />} style={styles.menu}>
+                <MenuItem onPress={this.copySelected}>
+                  <Text style={styles.menuText}>Copy to Clipboard</Text>
+                </MenuItem>
+                <MenuItem onPress={this.saveSelected}>
+                  <Text style={styles.menuText}>Save Query</Text>
+                </MenuItem>
+              </Menu>
+            </View>
+
+            <Footer>
+              <FooterTab style={styles.footer}>
                 <Input
-                  value={location}
-                  onSubmitEditing={this.connect}
-                  onChangeText={location => this.setState({ location })}
+                  placeholder="Enter Message"
+                  value={message}
+                  onChangeText={message => this.setState({ message })}
+                  onSubmitEditing={this.send}
                   style={styles.input}
                 />
-
-                {connected ? (
-                  <TouchableHighlight
-                    onPress={this.disconnect}
-                    underlayColor="hsl(0, 0%, 7%)"
-                  >
-                    <Text style={styles.link}>Disconnect&nbsp;&nbsp;</Text>
-                  </TouchableHighlight>
-                ) : !connectionInProgress ? (
-                  <TouchableHighlight
-                    onPress={this.connect}
-                    underlayColor="hsl(0, 0%, 7%)"
-                  >
-                    <Text style={styles.link}>Connect&nbsp;&nbsp;</Text>
-                  </TouchableHighlight>
-                ) : (
-                  <Text style={styles.link}>Connect&nbsp;&nbsp;</Text>
-                )}
-              </Item>
-            </View>
-            <View style={styles.console}>
-              {log.map((line, index) => {
-                const { type, data } = line;
-
-                const logStyle =
-                  index % 2 == 0 ? styles.logEven : styles.logOdd;
-
-                const underlayColor =
-                  index % 2 == 0 ? 'hsl(0, 0%, 13%)' : 'hsl(0, 0%, 9%)';
-
-                let isValidJSON: boolean;
-                let jsonMessage: any;
-
-                try {
-                  jsonMessage = JSON.parse(data);
-                  isValidJSON = true;
-                } catch (error) {
-                  isValidJSON = false;
-                }
-
-                switch (type) {
-                  case 'system':
-                    return (
-                      <View style={logStyle} key={index}>
-                        <Text style={styles.systemLog}>{data}</Text>
-                      </View>
-                    );
-                  case 'out':
-                    return (
-                      <TouchableHighlight
-                        key={index}
-                        underlayColor={underlayColor}
-                        onLongPress={event => {
-                          this.handleLogLongPress(event, log[index]);
-                        }}
-                      >
-                        <View style={logStyle}>
-                          <Text style={styles.outLog}>
-                            {isValidJSON
-                              ? JSON.stringify(jsonMessage, null, 2)
-                              : data}
-                          </Text>
-                        </View>
-                      </TouchableHighlight>
-                    );
-                  case 'in':
-                    return (
-                      <TouchableHighlight
-                        key={index}
-                        underlayColor={underlayColor}
-                        onLongPress={event => {
-                          this.handleLogLongPress(event, log[index]);
-                        }}
-                      >
-                        <View style={logStyle}>
-                          <Text style={styles.inLog}>
-                            {isValidJSON
-                              ? JSON.stringify(jsonMessage, null, 2)
-                              : data}
-                          </Text>
-                        </View>
-                      </TouchableHighlight>
-                    );
-                  case 'warning':
-                    return (
-                      <View style={logStyle} key={index}>
-                        <Text style={styles.warningLog}>{data}</Text>
-                      </View>
-                    );
-                  case 'error':
-                    return (
-                      <View style={logStyle} key={index}>
-                        <Text style={styles.errorLog}>{data}</Text>
-                      </View>
-                    );
-                  default:
-                    return (
-                      <View style={logStyle} key={index}>
-                        <Text style={styles.defaultLog}>{data}</Text>
-                      </View>
-                    );
-                }
-              })}
-            </View>
-          </ScrollView>
-
-          <View style={{ position: 'absolute', top: touchY, left: touchX }}>
-            <Menu ref={this.setMenuRef} button={<Text />} style={styles.menu}>
-              <MenuItem onPress={this.copySelected}>
-                <Text style={styles.menuText}>Copy to Clipboard</Text>
-              </MenuItem>
-              <MenuItem onPress={this.saveSelected}>
-                <Text style={styles.menuText}>Save Query</Text>
-              </MenuItem>
-            </Menu>
-          </View>
-
-          <Footer>
-            <FooterTab style={styles.footer}>
-              <Input
-                placeholder="Enter Message"
-                value={message}
-                onChangeText={message => this.setState({ message })}
-                onSubmitEditing={this.send}
-                style={styles.input}
-              />
-            </FooterTab>
-          </Footer>
-        </Container>
-      </KeyboardAvoidingView>
+              </FooterTab>
+            </Footer>
+          </Container>
+        </KeyboardAvoidingView>
+      </NativeRoot>
     );
   }
 }

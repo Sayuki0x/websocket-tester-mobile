@@ -117,15 +117,13 @@ export default class Root extends Component<Props, State> {
   }
 
   keyboardDidHide = (event: any) => {
-    console.log('keyboard hidden');
-
     this.setState({
       bottomPadding: 0
     });
   };
 
   keyboardDidShow = (event: any) => {
-    const bottomPadding = event.endCoordinates.height + this.inputHeight;
+    const bottomPadding = event.endCoordinates.height;
 
     this.setState({
       bottomPadding
@@ -145,7 +143,6 @@ export default class Root extends Component<Props, State> {
   initListeners() {
     this.client.onopen = () => {
       const { location } = this.state;
-      console.log('Connected to websocket');
       this.setState({
         connected: true,
         connectionInProgress: false
@@ -160,14 +157,12 @@ export default class Root extends Component<Props, State> {
     };
     this.client.onmessage = (message: { data: any }) => {
       const { data } = message;
-      console.log(`incoming message: ${data}`);
       this.log('in', data);
     };
     this.client.onerror = () => {
       this.setState({
         connectionInProgress: false
       });
-      console.log('error occurred');
       Toast.show({
         text: 'An error occurred connecting to the websocket.',
         buttonText: 'Okay',
@@ -178,7 +173,6 @@ export default class Root extends Component<Props, State> {
     };
     this.client.onclose = () => {
       const { location } = this.state;
-      console.log('connection closed');
       this.setState({
         connected: false
       });
@@ -206,8 +200,6 @@ export default class Root extends Component<Props, State> {
   };
 
   disconnect() {
-    console.log('disconnect');
-
     const { connected } = this.state;
 
     if (!connected) {
@@ -237,7 +229,6 @@ export default class Root extends Component<Props, State> {
       return;
     }
 
-    console.log(`send message: ${message}`);
     this.client.send(message);
     this.log('out', message);
 
@@ -255,7 +246,6 @@ export default class Root extends Component<Props, State> {
       },
       () => {
         this.showMenu();
-        console.log(this.state.touchX, this.state.touchY);
       }
     );
   };
@@ -263,7 +253,6 @@ export default class Root extends Component<Props, State> {
   saveSelected() {
     const { selectedLine } = this.state;
     const { data } = selectedLine;
-    console.log(`Saving ${data} as a command. {TODO}`);
     this.menu.hide();
   }
 
@@ -449,19 +438,17 @@ export default class Root extends Component<Props, State> {
             </Menu>
           </View>
 
-          <KeyboardAvoidingView behavior="position">
-            <Footer>
-              <FooterTab style={styles.footer}>
-                <Input
-                  placeholder="Enter Message"
-                  value={message}
-                  onChangeText={message => this.setState({ message })}
-                  onSubmitEditing={this.send}
-                  style={styles.input}
-                />
-              </FooterTab>
-            </Footer>
-          </KeyboardAvoidingView>
+          <Footer style={{ bottom: bottomPadding }}>
+            <FooterTab style={styles.footer}>
+              <Input
+                placeholder="Enter Message"
+                value={message}
+                onChangeText={message => this.setState({ message })}
+                onSubmitEditing={this.send}
+                style={styles.input}
+              />
+            </FooterTab>
+          </Footer>
         </Container>
       </NativeRoot>
     );

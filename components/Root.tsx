@@ -14,7 +14,6 @@ import {
   Item,
   Input,
   Toast,
-  Content,
   Root as NativeRoot
 } from 'native-base';
 import {
@@ -24,7 +23,8 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Clipboard
+  Clipboard,
+  Keyboard
 } from 'react-native';
 import { w3cwebsocket as W3CWebSocket } from 'websocket';
 import { getStatusBarHeight } from 'react-native-status-bar-height';
@@ -43,6 +43,7 @@ type State = {
   selectedLine: any;
   touchX: number;
   touchY: number;
+  bottomPadding: number;
 };
 
 export default class Root extends Component<Props, State> {
@@ -50,6 +51,9 @@ export default class Root extends Component<Props, State> {
   client: W3CWebSocket;
   scrollView: any;
   menu: any;
+  inputHeight: number;
+  keyboardWillShowSub: any;
+  keyboardWillHideSub: any;
 
   constructor(props: Props) {
     super(props);
@@ -62,7 +66,8 @@ export default class Root extends Component<Props, State> {
       log: [],
       selectedLine: {},
       touchX: 0,
-      touchY: 0
+      touchY: 0,
+      bottomPadding: 0
     };
 
     this.connect = this.connect.bind(this);
@@ -74,6 +79,24 @@ export default class Root extends Component<Props, State> {
     this.setMenuRef = this.setMenuRef.bind(this);
     this.copySelected = this.copySelected.bind(this);
     this.saveSelected = this.saveSelected.bind(this);
+    this.keyboardDidShow = this.keyboardDidShow.bind(this);
+    this.keyboardDidHide = this.keyboardDidHide.bind(this);
+  }
+
+  componentWillMount() {
+    this.keyboardWillShowSub = Keyboard.addListener(
+      'keyboardDidShow',
+      this.keyboardDidShow
+    );
+    this.keyboardWillHideSub = Keyboard.addListener(
+      'keyboardDidHide',
+      this.keyboardDidHide
+    );
+  }
+
+  componentWillUnmount() {
+    this.keyboardWillShowSub.remove();
+    this.keyboardWillHideSub.remove();
   }
 
   connect() {
@@ -92,6 +115,22 @@ export default class Root extends Component<Props, State> {
     this.client = new W3CWebSocket(location);
     this.initListeners();
   }
+
+  keyboardDidHide = (event: any) => {
+    console.log('keyboard hidden');
+
+    this.setState({
+      bottomPadding: 0
+    });
+  };
+
+  keyboardDidShow = (event: any) => {
+    const bottomPadding = event.endCoordinates.height + this.inputHeight;
+
+    this.setState({
+      bottomPadding
+    });
+  };
 
   hideMenu = () => {
     this.menu.hide();
@@ -256,12 +295,13 @@ export default class Root extends Component<Props, State> {
       connectionInProgress,
       log,
       touchX,
-      touchY
+      touchY,
+      bottomPadding
     } = this.state;
 
     return (
       <NativeRoot>
-        <Container style={styles.container}>
+        <Container style={{ backgroundColor: 'hsl(0, 0%, 14%)' }}>
           <Header style={styles.header}>
             <Left>
               <Button transparent>
@@ -273,138 +313,143 @@ export default class Root extends Component<Props, State> {
             </Body>
             <Right />
           </Header>
-          <KeyboardAvoidingView behavior="padding" style={styles.rootContainer}>
-            <ScrollView
-              ref={ref => (this.scrollView = ref)}
-              onContentSizeChange={() => this.scrollView.scrollToEnd()}
-              style={styles.scrollView}
-              stickyHeaderIndices={[0]}
-              contentContainerStyle={{ justifyContent: 'flex-end' }}
-            >
-              <View style={styles.urlBar}>
-                <Item>
-                  <Input
-                    value={location}
-                    onSubmitEditing={this.connect}
-                    onChangeText={location => this.setState({ location })}
-                    style={styles.input}
-                  />
+          <ScrollView
+            ref={ref => (this.scrollView = ref)}
+            onContentSizeChange={() => this.scrollView.scrollToEnd()}
+            style={{ flex: 1 }}
+            stickyHeaderIndices={[0]}
+            contentContainerStyle={{ justifyContent: 'flex-end' }}
+          >
+            <View style={styles.urlBar}>
+              <Item>
+                <Input
+                  value={location}
+                  onSubmitEditing={this.connect}
+                  onChangeText={location => this.setState({ location })}
+                  style={styles.input}
+                  onLayout={event => {
+                    this.inputHeight = event.nativeEvent.layout.height;
+                  }}
+                />
 
-                  {connected ? (
-                    <TouchableHighlight
-                      onPress={this.disconnect}
-                      underlayColor="hsl(0, 0%, 7%)"
-                    >
-                      <Text style={styles.link}>Disconnect</Text>
-                    </TouchableHighlight>
-                  ) : !connectionInProgress ? (
-                    <TouchableHighlight
-                      onPress={this.connect}
-                      underlayColor="hsl(0, 0%, 7%)"
-                    >
-                      <Text style={styles.link}>Connect</Text>
-                    </TouchableHighlight>
-                  ) : (
-                    <Text style={styles.link}>Connecting...</Text>
-                  )}
-                </Item>
-              </View>
-              <View style={styles.console}>
-                {log.map((line, index) => {
-                  const { type, data } = line;
-
-                  const logStyle =
-                    index % 2 == 0 ? styles.logEven : styles.logOdd;
-
-                  const underlayColor =
-                    index % 2 == 0 ? 'hsl(0, 0%, 13%)' : 'hsl(0, 0%, 9%)';
-
-                  let isValidJSON: boolean;
-                  let jsonMessage: any;
-
-                  try {
-                    jsonMessage = JSON.parse(data);
-                    isValidJSON = true;
-                  } catch (error) {
-                    isValidJSON = false;
-                  }
-
-                  switch (type) {
-                    case 'system':
-                      return (
-                        <View style={logStyle} key={index}>
-                          <Text style={styles.systemLog}>{data}</Text>
-                        </View>
-                      );
-                    case 'out':
-                      return (
-                        <TouchableHighlight
-                          key={index}
-                          underlayColor={underlayColor}
-                          onLongPress={event => {
-                            this.handleLogLongPress(event, log[index]);
-                          }}
-                        >
-                          <View style={logStyle}>
-                            <Text style={styles.outLog}>
-                              {isValidJSON
-                                ? JSON.stringify(jsonMessage, null, 2)
-                                : data}
-                            </Text>
-                          </View>
-                        </TouchableHighlight>
-                      );
-                    case 'in':
-                      return (
-                        <TouchableHighlight
-                          key={index}
-                          underlayColor={underlayColor}
-                          onLongPress={event => {
-                            this.handleLogLongPress(event, log[index]);
-                          }}
-                        >
-                          <View style={logStyle}>
-                            <Text style={styles.inLog}>
-                              {isValidJSON
-                                ? JSON.stringify(jsonMessage, null, 2)
-                                : data}
-                            </Text>
-                          </View>
-                        </TouchableHighlight>
-                      );
-                    case 'warning':
-                      return (
-                        <View style={logStyle} key={index}>
-                          <Text style={styles.warningLog}>{data}</Text>
-                        </View>
-                      );
-                    case 'error':
-                      return (
-                        <View style={logStyle} key={index}>
-                          <Text style={styles.errorLog}>{data}</Text>
-                        </View>
-                      );
-                    default:
-                      return (
-                        <View style={logStyle} key={index}>
-                          <Text style={styles.defaultLog}>{data}</Text>
-                        </View>
-                      );
-                  }
-                })}
-              </View>
-            </ScrollView>
-            <View style={{ position: 'absolute', top: touchY, left: touchX }}>
-              <Menu ref={this.setMenuRef} button={<Text />} style={styles.menu}>
-                <MenuItem onPress={this.copySelected}>
-                  <Text style={styles.menuText}>Copy to Clipboard</Text>
-                </MenuItem>
-                <MenuItem onPress={this.saveSelected}>
-                  <Text style={styles.menuText}>Save Query</Text>
-                </MenuItem>
-              </Menu>
+                {connected ? (
+                  <TouchableHighlight
+                    onPress={this.disconnect}
+                    underlayColor="hsl(0, 0%, 7%)"
+                  >
+                    <Text style={styles.link}>Disconnect</Text>
+                  </TouchableHighlight>
+                ) : !connectionInProgress ? (
+                  <TouchableHighlight
+                    onPress={this.connect}
+                    underlayColor="hsl(0, 0%, 7%)"
+                  >
+                    <Text style={styles.link}>Connect</Text>
+                  </TouchableHighlight>
+                ) : (
+                  <Text style={styles.link}>Connecting...</Text>
+                )}
+              </Item>
             </View>
+            <View style={styles.console}>
+              {log.map((line, index) => {
+                const { type, data } = line;
 
+                const logStyle =
+                  index % 2 == 0 ? styles.logEven : styles.logOdd;
+
+                const underlayColor =
+                  index % 2 == 0 ? 'hsl(0, 0%, 13%)' : 'hsl(0, 0%, 9%)';
+
+                let isValidJSON: boolean;
+                let jsonMessage: any;
+
+                try {
+                  jsonMessage = JSON.parse(data);
+                  isValidJSON = true;
+                } catch (error) {
+                  isValidJSON = false;
+                }
+
+                switch (type) {
+                  case 'system':
+                    return (
+                      <View style={logStyle} key={index}>
+                        <Text style={styles.systemLog}>{data}</Text>
+                      </View>
+                    );
+                  case 'out':
+                    return (
+                      <TouchableHighlight
+                        key={index}
+                        underlayColor={underlayColor}
+                        onLongPress={event => {
+                          this.handleLogLongPress(event, log[index]);
+                        }}
+                      >
+                        <View style={logStyle}>
+                          <Text style={styles.outLog}>
+                            {isValidJSON
+                              ? JSON.stringify(jsonMessage, null, 2)
+                              : data}
+                          </Text>
+                        </View>
+                      </TouchableHighlight>
+                    );
+                  case 'in':
+                    return (
+                      <TouchableHighlight
+                        key={index}
+                        underlayColor={underlayColor}
+                        onLongPress={event => {
+                          this.handleLogLongPress(event, log[index]);
+                        }}
+                      >
+                        <View style={logStyle}>
+                          <Text style={styles.inLog}>
+                            {isValidJSON
+                              ? JSON.stringify(jsonMessage, null, 2)
+                              : data}
+                          </Text>
+                        </View>
+                      </TouchableHighlight>
+                    );
+                  case 'warning':
+                    return (
+                      <View style={logStyle} key={index}>
+                        <Text style={styles.warningLog}>{data}</Text>
+                      </View>
+                    );
+                  case 'error':
+                    return (
+                      <View style={logStyle} key={index}>
+                        <Text style={styles.errorLog}>{data}</Text>
+                      </View>
+                    );
+                  default:
+                    return (
+                      <View style={logStyle} key={index}>
+                        <Text style={styles.defaultLog}>{data}</Text>
+                      </View>
+                    );
+                }
+              })}
+            </View>
+            <View style={{ height: bottomPadding, flex: 1 }} />
+          </ScrollView>
+
+          <View style={{ position: 'absolute', top: touchY, left: touchX }}>
+            <Menu ref={this.setMenuRef} button={<Text />} style={styles.menu}>
+              <MenuItem onPress={this.copySelected}>
+                <Text style={styles.menuText}>Copy to Clipboard</Text>
+              </MenuItem>
+              <MenuItem onPress={this.saveSelected}>
+                <Text style={styles.menuText}>Save Query</Text>
+              </MenuItem>
+            </Menu>
+          </View>
+
+          <KeyboardAvoidingView behavior="position">
             <Footer>
               <FooterTab style={styles.footer}>
                 <Input
@@ -427,14 +472,12 @@ const consoleFontSize = 17;
 
 const styles = StyleSheet.create({
   rootContainer: { flex: 1 },
-  container: { backgroundColor: 'hsl(0, 0%, 14%)' },
   header: {
     paddingTop: getStatusBarHeight(),
     height: 54 + getStatusBarHeight(),
     backgroundColor: 'hsl(0, 0%, 4%)'
   },
   urlBar: { backgroundColor: 'hsl(0, 0%, 7%)' },
-  scrollView: { flex: 1 },
   input: { color: 'hsl(0, 0%, 98%)' },
   link: { color: 'hsl(171, 100%, 41%)', paddingRight: '2%' },
   console: {},

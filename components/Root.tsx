@@ -29,6 +29,8 @@ import { w3cwebsocket as W3CWebSocket } from 'websocket';
 import { getStatusBarHeight } from 'react-native-status-bar-height';
 import Menu, { MenuItem } from 'react-native-material-menu';
 
+const customOffset = 0;
+
 const monospaceFont = Platform.OS === 'ios' ? 'Menlo' : 'monospace';
 
 type Props = {};
@@ -121,7 +123,7 @@ export default class Root extends Component<Props, State> {
   };
 
   keyboardDidShow = (event: any) => {
-    const bottomPadding = event.endCoordinates.height;
+    const bottomPadding = event.endCoordinates.height + customOffset;
 
     this.setState({
       bottomPadding
@@ -438,6 +440,11 @@ export default class Root extends Component<Props, State> {
                 onSubmitEditing={this.send}
                 style={styles.input}
               />
+              <View style={{justifyContent:'center', alignItems: 'center', paddingRight: '2%'}}>
+                <TouchableHighlight onPress={this.send} underlayColor="hsl(0, 0%, 7%)">
+                  <Icon active name='paper-plane'  style={{color: '#F5F5F5'}} />
+                </TouchableHighlight>
+              </View>
             </FooterTab>
           </Footer>
         </Container>

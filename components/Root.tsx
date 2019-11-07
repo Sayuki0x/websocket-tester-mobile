@@ -17,7 +17,6 @@ import {
   Root as NativeRoot
 } from 'native-base';
 import {
-  KeyboardAvoidingView,
   TouchableHighlight,
   View,
   Platform,
@@ -28,7 +27,7 @@ import {
 } from 'react-native';
 import { w3cwebsocket as W3CWebSocket } from 'websocket';
 import { getStatusBarHeight } from 'react-native-status-bar-height';
-import Menu, { MenuItem, MenuDivider } from 'react-native-material-menu';
+import Menu, { MenuItem } from 'react-native-material-menu';
 
 const monospaceFont = Platform.OS === 'ios' ? 'Menlo' : 'monospace';
 
@@ -51,7 +50,6 @@ export default class Root extends Component<Props, State> {
   client: W3CWebSocket;
   scrollView: any;
   menu: any;
-  inputHeight: number;
   keyboardWillShowSub: any;
   keyboardWillHideSub: any;
 
@@ -149,7 +147,6 @@ export default class Root extends Component<Props, State> {
       });
       Toast.show({
         text: `Connected to ${location}`,
-        buttonText: 'Okay',
         duration: 2000,
         type: 'success',
         position: 'top'
@@ -165,7 +162,6 @@ export default class Root extends Component<Props, State> {
       });
       Toast.show({
         text: 'An error occurred connecting to the websocket.',
-        buttonText: 'Okay',
         duration: 2000,
         type: 'danger',
         position: 'top'
@@ -178,7 +174,6 @@ export default class Root extends Component<Props, State> {
       });
       Toast.show({
         text: `Disconnected from ${location}`,
-        buttonText: 'Okay',
         duration: 2000,
         type: 'warning',
         position: 'top'
@@ -217,7 +212,6 @@ export default class Root extends Component<Props, State> {
     if (!connected) {
       Toast.show({
         text: 'Connect to a websocket first!',
-        buttonText: 'Okay',
         duration: 2000,
         type: 'warning',
         position: 'top'
@@ -316,9 +310,6 @@ export default class Root extends Component<Props, State> {
                   onSubmitEditing={this.connect}
                   onChangeText={location => this.setState({ location })}
                   style={styles.input}
-                  onLayout={event => {
-                    this.inputHeight = event.nativeEvent.layout.height;
-                  }}
                 />
 
                 {connected ? (

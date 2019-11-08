@@ -78,7 +78,7 @@ export default class Root extends Component<Props, State> {
     this.handleLogLongPress = this.handleLogLongPress.bind(this);
     this.setMenuRef = this.setMenuRef.bind(this);
     this.copySelected = this.copySelected.bind(this);
-    this.saveSelected = this.saveSelected.bind(this);
+    this.resendLast = this.resendLast.bind(this);
     this.keyboardDidShow = this.keyboardDidShow.bind(this);
     this.keyboardDidHide = this.keyboardDidHide.bind(this);
   }
@@ -206,8 +206,10 @@ export default class Root extends Component<Props, State> {
     this.client.close();
   }
 
-  send(event: any) {
-    event.preventDefault();
+  send(event?: any) {
+    if (event) {
+      event.preventDefault();
+    }
 
     const { message, connected } = this.state;
 
@@ -246,10 +248,16 @@ export default class Root extends Component<Props, State> {
     );
   };
 
-  saveSelected() {
+  resendLast() {
     const { selectedLine } = this.state;
     const { data } = selectedLine;
-    this.menu.hide();
+    this.setState(
+      {
+        message: data
+      },
+      this.send
+    );
+    this.hideMenu();
   }
 
   copySelected() {
@@ -288,15 +296,9 @@ export default class Root extends Component<Props, State> {
       <NativeRoot>
         <Container style={{ backgroundColor: 'hsl(0, 0%, 14%)' }}>
           <Header style={styles.header}>
-            <Left>
-              <Button transparent>
-                <Icon name="menu" />
-              </Button>
-            </Left>
             <Body>
               <Title>WebSocket Tester</Title>
             </Body>
-            <Right />
           </Header>
           <ScrollView
             ref={ref => (this.scrollView = ref)}
@@ -425,8 +427,8 @@ export default class Root extends Component<Props, State> {
               <MenuItem onPress={this.copySelected}>
                 <Text style={styles.menuText}>Copy to Clipboard</Text>
               </MenuItem>
-              <MenuItem onPress={this.saveSelected}>
-                <Text style={styles.menuText}>Save Query</Text>
+              <MenuItem onPress={this.resendLast}>
+                <Text style={styles.menuText}>Resend Message</Text>
               </MenuItem>
             </Menu>
           </View>
@@ -439,10 +441,24 @@ export default class Root extends Component<Props, State> {
                 onChangeText={message => this.setState({ message })}
                 onSubmitEditing={this.send}
                 style={styles.input}
+                blurOnSubmit={false}
               />
-              <View style={{justifyContent:'center', alignItems: 'center', paddingRight: '2%'}}>
-                <TouchableHighlight onPress={this.send} underlayColor="hsl(0, 0%, 7%)">
-                  <Icon active name='paper-plane'  style={{color: '#F5F5F5'}} />
+              <View
+                style={{
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  paddingRight: '2%'
+                }}
+              >
+                <TouchableHighlight
+                  onPress={this.send}
+                  underlayColor="hsl(0, 0%, 7%)"
+                >
+                  <Icon
+                    active
+                    name="paper-plane"
+                    style={{ color: '#F5F5F5' }}
+                  />
                 </TouchableHighlight>
               </View>
             </FooterTab>

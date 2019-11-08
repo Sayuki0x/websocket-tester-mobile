@@ -314,6 +314,7 @@ export default class Root extends Component<Props, State> {
                   onSubmitEditing={this.connect}
                   onChangeText={location => this.setState({ location })}
                   style={styles.input}
+                  disabled={connected}
                 />
 
                 {connected ? (

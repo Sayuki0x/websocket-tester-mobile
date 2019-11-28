@@ -29,5 +29,5 @@
     "typescript": "^3.6.3"
   },
   "private": true,
-  "license": "GPL-3.0"
+  "license": "AGPL-3.0"
 }
